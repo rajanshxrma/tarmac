@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # embedded Kafka broker + MongoDB Testcontainer, so the full event
+      # choreography (including the dead-letter path) runs on every push
+      - name: Build and run tests (both services)
+        run: mvn -B verify
+
+      - name: Build service images
+        run: |
+          docker build -f incident-service/Dockerfile -t incident-service:ci .
+          docker build -f dispatch-service/Dockerfile -t dispatch-service:ci .
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: "**/target/surefire-reports/"

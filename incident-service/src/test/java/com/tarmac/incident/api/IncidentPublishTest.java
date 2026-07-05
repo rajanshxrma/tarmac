@@ -84,13 +84,14 @@ class IncidentPublishTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void invalidReportIsRejectedWithFieldErrors() {
         ResponseEntity<Map> response = rest.postForEntity("/api/v1/incidents", Map.of(
                 "airport", "atlanta",
                 "severity", "HIGH"), Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        Map<?, ?> fieldErrors = (Map<?, ?>) response.getBody().get("fieldErrors");
+        Map<String, Object> fieldErrors = (Map<String, Object>) response.getBody().get("fieldErrors");
         assertThat(fieldErrors).containsKey("airport");
         assertThat(fieldErrors).containsKey("equipment");
     }
